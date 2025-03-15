@@ -3,7 +3,9 @@ import cmd
 import itertools
 import time
 from concurrent.futures.process import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, asdict
+from joblib import Parallel, delayed
 
 import numpy as np
 import pandas as pd
@@ -107,6 +109,16 @@ def _run_multi(process, args):
         )
     return stats
 
+# def _run_multi(process, args):
+#     config = RecEnvConfigSchema().load(yaml.full_load(open(args.config)))
+#     stats = []
+#     with RecEnv(config) as env:
+#         # Увеличиваем количество эпизодов на процесс
+#         episodes_per_process = args.episodes // args.processes
+#         stats = run_experiment(1, env, episodes_per_process, REMOTE, config)
+#     return stats
+
+
 
 def run_multi(args):
     with ProcessPoolExecutor(args.processes) as executor:
@@ -114,6 +126,23 @@ def run_multi(args):
             _run_multi, list(range(args.processes)), [args] * args.processes
         )
     return list(itertools.chain(*stats))
+
+# def run_multi(args):
+#     with ProcessPoolExecutor(max_workers=args.processes) as executor:
+#         futures = [
+#             executor.submit(_run_multi, process, args)
+#             for process in range(args.processes)
+#         ]
+#         stats = [f.result() for f in tqdm.tqdm(futures)]
+#     return list(itertools.chain(*stats))
+
+# def run_multi(args):
+#     stats = Parallel(n_jobs=args.processes, backend="loky")(
+#         delayed(_run_multi)(process, args)
+#         for process in range(args.processes)
+#     )
+#     return list(itertools.chain(*stats))
+
 
 
 def main():

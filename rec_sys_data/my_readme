@@ -1,0 +1,6 @@
+1. Сделать server
+2. В .\botify\ docker-compose up -d --build --force-recreate --scale recommender=N
+2.5. Проверка: curl http://localhost:5001/
+3. В .\sim\ запускать python -m sim.run --episodes 1000 --config config/env.yml multi --processes 8
+4. В .\script\ python dataclient.py --recommender N log2local C:\Users\denis\PycharmProjects\recsys-course-spring-2025\rec_sys_data\week_4
+5.

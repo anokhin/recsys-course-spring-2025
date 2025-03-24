@@ -1,0 +1,5 @@
+embeddings {
+tensor_name: "lightfm:00000"
+tensor_path: "00000/lightfm/tensors.tsv"
+metadata_path: "00000/lightfm/metadata.tsv"
+}

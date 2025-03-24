@@ -1,6 +1,39 @@
+conda activate lightfm_env
+
 1. Сделать server
 2. В .\botify\ docker-compose up -d --build --force-recreate --scale recommender=N
 2.5. Проверка: curl http://localhost:5001/
 3. В .\sim\ запускать python -m sim.run --episodes 1000 --config config/env.yml multi --processes 8
 4. В .\script\ python dataclient.py --recommender N log2local C:\Users\denis\PycharmProjects\recsys-course-spring-2025\rec_sys_data\week_4
-5.
+python dataclient.py --recommender N log2local /mnt/c/Users/denis/PycharmProjects/recsys-course-spring-2025/rec_sys_data/week_4/
+
+"/mnt/c/Users/denis/PycharmProjects/recsys-course-spring-2025/rec_sys_data/week_4/*/data.json"
+
+1. config.json
+"REDIS_RECOMMENDATIONS_LFM_HOST": "redis",
+"REDIS_RECOMMENDATIONS_LFM_PORT": 6379,
+"REDIS_RECOMMENDATIONS_LFM_DB": 3,
+
+"RECOMMENDATIONS_LFM_FILE_PATH": "./data/recommendations_lfm.json",
+
+2. server.py
+recommendations_lfm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM")
+catalog.upload_recommendations(recommendations_lfm.connection, "RECOMMENDATIONS_LFM_FILE_PATH")
+
+3. experiment.py
+PERSONALIZED = Experiment("PERSONALIZED", Split.THREE_WAY)
+self.experiments = [Experiments.PERSONALIZED]
+
+4. server.py
+treatment = Experiments.PERSONALIZED.assign(user)
+
+
+
+
+
+
+
+
+
+
+

@@ -62,10 +62,9 @@ class Experiments:
     A static container for all the existing experiments.
     """
 
-    # TODO Семинар 1, Шаг 4 -  Запускаем A/B эксперимент.
     AA = Experiment("AA", Split.HALF_HALF)
-    # TODO Семинар 1, Шаг 4.1 - Создаем эксперимент STICKY_ARTIST
     STICKY_ARTIST = Experiment("STICKY_ARTIST", Split.NINE_WAY)
+
     TOP_POP = Experiment("TOP_POP", Split.FOUR_WAY)
     USER_BASED = Experiment("USER_BASED", Split.HALF_HALF)
     PERSONALIZED = Experiment("PERSONALIZED", Split.HALF_HALF)

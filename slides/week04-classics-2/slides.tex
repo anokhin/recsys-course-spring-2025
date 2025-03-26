@@ -19,7 +19,7 @@
 \definecolor{info}{RGB}{62, 180, 137}
 \definecolor{warn}{RGB}{128, 0, 0}
 
-\author{Петр Погорелов}
+\author{Петр Погорелов\\Олег Сапрыкин}
 \title{Классические алгоритмы рекомендаций}
 
 \logo{\includegraphics[width=.05\textwidth]{images/ok_logo.png}}
@@ -94,6 +94,10 @@
 \includegraphics[scale=0.5]{images/utility-2.png}
 \end{center}
 
+\[
+\hat r_{ui} = f(u, i)
+\]
+
 \end{frame}
 
 \begin{frame}{Бейзлайн \cite{KOREN}}
@@ -126,10 +130,13 @@ b_{ui} = \mu + b_u + b_i
 \[
 \sum_{u, i} (b_{ui} - \mu - b_u - b_i)^2 + \lambda_1 b_u^2 + \lambda_2 b_i^2 \rightarrow min_{b_u, b_i}
 \]
+\begin{itemize}
+\item $\lambda_1$, $\lambda_2$ -- параметры регуляризации
+\end{itemize}
 
 \end{frame}
 
-\begin{frame}{SVD}
+\begin{frame}{Сингулярное разложение (SVD)}
 
 \begin{columns}
 \begin{column}{0.2\textwidth} 
@@ -163,6 +170,12 @@ b_{ui} = \mu + b_u + b_i
 
 \begin{frame}
 \begin{center}
+\includegraphics[scale=0.5]{images/SVD.png}
+\end{center}
+\end{frame}
+
+\begin{frame}
+\begin{center}
 \includegraphics[scale=0.3]{images/latent.png}
 \end{center}
 \end{frame}
@@ -181,6 +194,21 @@ b_{ui} = \mu + b_u + b_i
 \item повторяем до сходимости
 \end{enumerate}
 \item SGD
+\[
+e_{ui} = r_{ui} - \mu - b_u - b_i - q_i^T p_u 
+\]
+\[
+b_u = b_u + \gamma * (e_{ui} - \lambda * b_u) 
+\]
+\[
+b_i = b_i + \gamma * (e_{ui} - \lambda * b_i) 
+\]
+\[
+q_i = q_i + \gamma * (e_{ui}*p_u - \lambda * q_i) 
+\]
+\[
+p_i = p_i + \gamma * (e_{ui}*q_i - \lambda * p_u)
+\]
 \end{itemize}
 
 \end{frame}

@@ -20,7 +20,7 @@
 \definecolor{info}{RGB}{62, 180, 137}
 \definecolor{warn}{RGB}{128, 0, 0}
 
-\author{Петр Погорелов}
+\author{Петр Погорелов\\Олег Сапрыкин}
 \title{Метрики и базовые подходы}
 
 \logo{\includegraphics[width=.05\textwidth]{images/ok_logo.png}}
@@ -243,6 +243,53 @@ Q: Какую метрику вы бы предложили измерять в 
 
 \end{frame}
 
+\begin{frame}{Кросс-валидация}
+
+\vfill
+
+\begin{center}
+\includegraphics[scale=0.4]{images/k-fold-cross-validation.png}
+\end{center}
+
+\vfill
+
+\end{frame}
+
+\begin{frame}{Кросс-валидация матрицы user-item}
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+   \begin{center}
+		\includegraphics[scale=0.38]{images/user-item-cross-validation-Page-1.png}
+   \end{center}
+\end{column}
+\begin{column}{0.5\textwidth}
+    \begin{tcolorbox}[colback=info!5,colframe=info!80,title=]
+      \begin{itemize}
+      \item Исключение item или user является проблемой.
+      \item Решение: исключать пары (user, item) случайно.
+      \end{itemize}
+    \end{tcolorbox}
+    \begin{center}
+		\includegraphics[scale=0.38]{images/user-item-cross-validation-Page-2.png}
+   \end{center}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}{Учет времени события в кросс-валидации}
+
+\vfill
+
+\begin{center}
+\includegraphics[scale=0.32]{images/temporal-cross-validation.png}
+\end{center}
+
+\vfill
+
+\end{frame}
+
 \begin{frame}{}
 
 \begin{tcolorbox}[colback=info!5,colframe=info!80,title=]
@@ -290,6 +337,14 @@ RMSE, MAE, accuracy, precision, recall, auc, ...
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
+   \begin{tcolorbox}[colback=gray!5,colframe=gray!80,title=]
+\[
+      Precision@k = \frac{no.\ relevant\ items}{k}\\
+\]
+\[
+      Recall@k = \frac{no.\ relevant\ items\ in\ k}{total\ no.\ relevant\ items}\\
+\]
+   \end{tcolorbox}
    \begin{center}
 		\includegraphics[scale=0.22]{images/precision-recall.png}
    \end{center}
@@ -354,7 +409,7 @@ RMSE, MAE, accuracy, precision, recall, auc, ...
 
 \end{frame}
 
-\begin{frame}{MRR}
+\begin{frame}{Mean Reciprocal Rank}
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
@@ -381,7 +436,7 @@ RMSE, MAE, accuracy, precision, recall, auc, ...
 
 \end{frame}
 
-\begin{frame}{[N]DCG}
+\begin{frame}{Normalized Discounted Cumulative Gain}
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
@@ -480,7 +535,7 @@ MMR = \max_j \left[ \lambda \, similarity(j, U) - (1 - \lambda) \max_{k < j} sim
 
 \section{Удачность}
 
-\begin{frame}{Удачность}
+\begin{frame}{Удачность \cite{SILVIERA}}
 
 The term {\bf serendipity} has been recognized as one of the most untranslatable words. 
 The first known use of the term was found in a letter by Horace Walpole to Sir Horace Mann on January 28, 1754. 

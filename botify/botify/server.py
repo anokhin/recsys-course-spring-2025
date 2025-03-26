@@ -31,6 +31,8 @@ artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
 recommendations_ub = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_UB")
 recommendations_lfm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM")
+# recommendations_ncf = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_NCF")
+recommendations_dssm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DSSM")
 
 data_logger = DataLogger(app)
 
@@ -40,6 +42,8 @@ catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
 catalog.upload_recommendations(recommendations_ub.connection, "RECOMMENDATIONS_UB_FILE_PATH")
 catalog.upload_recommendations(recommendations_lfm.connection, "RECOMMENDATIONS_LFM_FILE_PATH")
+# catalog.upload_recommendations(recommendations_ncf.connection, "RECOMMENDATIONS_NCF_FILE_PATH")
+catalog.upload_recommendations(recommendations_dssm.connection, "RECOMMENDATIONS_DSSM_FILE_PATH")
 
 top_tracks = TopPop.load_from_json(r"./data/top_tracks.json")
 
@@ -73,10 +77,10 @@ class NextTrack(Resource):
 
         # TODO Семинар 1, Шаг 4.2 - Используем эксперимент для выбора рекомендера между Random и StickyArtist.
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.PERSONALIZED.assign(user)
+        treatment = Experiments.DSSM.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Indexed(recommendations_lfm.connection, catalog, fallback)
+            recommender = Indexed(recommendations_dssm.connection, catalog, fallback)
         else:
             recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 

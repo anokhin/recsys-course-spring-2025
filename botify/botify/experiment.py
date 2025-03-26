@@ -72,6 +72,7 @@ class Experiments:
     CONTEXTUAL_DSSM_LFM = Experiment("CONTEXTUAL_DSSM_LFM", Split.FOUR_WAY)
     GCF = Experiment("GCF", Split.HALF_HALF)
     ALL = Experiment("ALL", Split.EIGHT_WAY)
+    NCF = Experiment("NCF", Split.HALF_HALF)
 
     def __init__(self):
-        self.experiments = [Experiments.PERSONALIZED]
+        self.experiments = [Experiments.DSSM]

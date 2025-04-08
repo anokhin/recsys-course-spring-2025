@@ -21,6 +21,7 @@ class Split(Enum):
     THREE_WAY = 3
     FOUR_WAY = 4
     FIVE_WAY = 5
+    SIX_WAY = 6
     SEVEN_WAY = 7
     EIGHT_WAY = 8
     NINE_WAY = 9
@@ -70,9 +71,12 @@ class Experiments:
     PERSONALIZED = Experiment("PERSONALIZED", Split.HALF_HALF)
     DSSM = Experiment("DSSM", Split.HALF_HALF)
     CONTEXTUAL_DSSM_LFM = Experiment("CONTEXTUAL_DSSM_LFM", Split.FOUR_WAY)
+    CONTEXTUAL = Experiment("CONTEXTUAL", Split.HALF_HALF)
     GCF = Experiment("GCF", Split.HALF_HALF)
     ALL = Experiment("ALL", Split.EIGHT_WAY)
     NCF = Experiment("NCF", Split.HALF_HALF)
 
+    MY_BEST_RECOMMENDER_EXPERIMENT = Experiment("MY_BEST_RECOMMENDER_EXPERIMENT", Split.HALF_HALF)
+
     def __init__(self):
-        self.experiments = [Experiments.DSSM]
+        self.experiments = [Experiments.MY_BEST_RECOMMENDER_EXPERIMENT]

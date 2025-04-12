@@ -31,3 +31,6 @@ botify/log/*
 *.synctex.gz
 *.nav
 *.snm
+
+# venv
+recsys-env

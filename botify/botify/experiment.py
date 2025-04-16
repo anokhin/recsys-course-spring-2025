@@ -70,9 +70,9 @@ class Experiments:
     PERSONALIZED = Experiment("PERSONALIZED", Split.HALF_HALF)
     DSSM = Experiment("DSSM", Split.HALF_HALF)
     CONTEXTUAL_DSSM_LFM = Experiment("CONTEXTUAL_DSSM_LFM", Split.FOUR_WAY)
-    CONTEXTUAL = Experiment("CONTEXTUAL", Split.HALF_HALF)
     GCF = Experiment("GCF", Split.HALF_HALF)
-    ALL = Experiment("ALL", Split.SEVEN_WAY)
+    ALL = Experiment("ALL", Split.EIGHT_WAY)
+    CORE = Experiment("CORE", Split.FOUR_WAY)
 
     def __init__(self):
-        self.experiments = [Experiments.ALL]
+        self.experiments = [Experiments.CORE]

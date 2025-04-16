@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import time
 from dataclasses import asdict
 from datetime import datetime
@@ -11,11 +12,12 @@ from gevent.pywsgi import WSGIServer
 
 from botify.data import DataLogger, Datum
 from botify.experiment import Experiments, Treatment
-from botify.recommenders.contextual import Contextual
-from botify.recommenders.indexed import Indexed
 from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
 from botify.recommenders.toppop import TopPop
+from botify.recommenders.indexed import Indexed
+from botify.recommenders.MyOwnIndexed import MyOwnIndexed
+from botify.recommenders.MyOwnCoolerIndexed import MyOwnCoolerIndexed
 from botify.track import Catalog
 
 root = logging.getLogger()
@@ -28,32 +30,15 @@ api = Api(app)
 tracks_redis = Redis(app, config_prefix="REDIS_TRACKS")
 artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
-recommendations_ub = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_UB")
-recommendations_lfm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM")
-recommendations_contextual = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_CONTEXTUAL")
-recommendations_gcf = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_GCF")
+recommendations_core = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_CORE")
 
 data_logger = DataLogger(app)
 
 catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
 catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
-
 catalog.upload_recommendations(
-    recommendations_ub.connection, "RECOMMENDATIONS_UB_FILE_PATH"
-)
-
-catalog.upload_recommendations(
-    recommendations_ub.connection, "RECOMMENDATIONS_LFM_FILE_PATH"
-)
-
-catalog.upload_recommendations(
-    recommendations_contextual, "RECOMMENDATIONS_CONTEXTUAL_FILE_PATH",
-    key_object='track', key_recommendations='recommendations'
-)
-
-catalog.upload_recommendations(
-    recommendations_gcf.connection, "RECOMMENDATIONS_GCF_FILE_PATH"
+    recommendations_core.connection, "RECOMMENDATIONS_CORE_FILE_PATH"
 )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
@@ -87,22 +72,16 @@ class NextTrack(Resource):
         args = parser.parse_args()
 
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.ALL.assign(user)
+        treatment = Experiments.CORE.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
+            recommender = MyOwnIndexed(recommendations_core.connection, catalog, fallback)
         elif treatment == Treatment.T2:
-            recommender = TopPop(top_tracks[:100], fallback)
+            recommender = MyOwnCoolerIndexed(recommendations_core.connection, catalog, fallback)
         elif treatment == Treatment.T3:
-            recommender = Indexed(recommendations_ub.connection, catalog, fallback)
-        elif treatment == Treatment.T4:
-            recommender = Indexed(recommendations_lfm.connection, catalog, fallback)
-        elif treatment == Treatment.T5:
-            recommender = Contextual(recommendations_contextual.connection, catalog, fallback)
-        elif treatment == Treatment.T6:
-            recommender = Indexed(recommendations_gcf.connection, catalog, fallback)
+            recommender = Indexed(recommendations_core.connection, catalog, fallback)
         else:
-            recommender = fallback
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

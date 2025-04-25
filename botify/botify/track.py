@@ -10,6 +10,7 @@ class Track:
     track: int
     artist: str
     title: str
+    genre: List[int] = field(default=lambda: [])
     recommendations: List[int] = field(default=lambda: [])
 
 
@@ -34,6 +35,7 @@ class Catalog:
                         data["track"],
                         data["artist"],
                         data["title"],
+                        data["genre"],
                         data.get("recommendations", []),
                     )
                 )
@@ -76,6 +78,7 @@ class Catalog:
         self.app.logger.info(
             f"Uploaded recommendations from {recommendations_file_path} for {j} {key_object}"
         )
+
 
     def to_bytes(self, instance):
         return pickle.dumps(instance)

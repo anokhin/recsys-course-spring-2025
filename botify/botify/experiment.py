@@ -64,6 +64,8 @@ class Experiments:
 
     AA = Experiment("AA", Split.HALF_HALF)
     STICKY_ARTIST = Experiment("STICKY_ARTIST", Split.NINE_WAY)
+    # Two-arm experiment: StickyArtist vs. Artist2Vec
+    ARTIST2VEC = Experiment("ARTIST2VEC", Split.HALF_HALF)
 
     TOP_POP = Experiment("TOP_POP", Split.FOUR_WAY)
     USER_BASED = Experiment("USER_BASED", Split.HALF_HALF)
@@ -76,4 +78,5 @@ class Experiments:
     DIVERSITY = Experiment("DIVERSITY", Split.THREE_WAY)
 
     def __init__(self):
-        self.experiments = [Experiments.DIVERSITY]
+        # Only the two-arm Artist2Vec experiment
+        self.experiments = [Experiments.ARTIST2VEC]

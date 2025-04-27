@@ -8,6 +8,7 @@ RUN pip install -r requirements.txt
 
 COPY botify ./botify
 COPY data ./data
+ COPY artist2vec.kv .
 
 RUN mkdir -p ./log
 

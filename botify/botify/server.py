@@ -14,6 +14,7 @@ from botify.data import DataLogger, Datum
 from botify.experiment import Experiments, Treatment
 from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
+from botify.recommenders.artist2vec import Artist2Vec
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
 from botify.track import Catalog
@@ -79,15 +80,20 @@ class NextTrack(Resource):
 
         args = parser.parse_args()
 
-        fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DIVERSITY.assign(user)
-
-        if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_dpp.connection, catalog, fallback)
-        elif treatment == Treatment.T2:
-            recommender = Sequential(recommendations_auth.connection, catalog, fallback)
+        # Two-arm experiment: control=StickyArtist, treatment=Artist2Vec
+        treatment = Experiments.ARTIST2VEC.assign(user)
+        if treatment == Treatment.C:
+            recommender = StickyArtist(
+                tracks_redis.connection,
+                artists_redis.connection,
+                catalog
+            )
         else:
-            recommender = Sequential(recommendations_lfm.connection, catalog, fallback)
+            recommender = Artist2Vec(
+                tracks_redis.connection,
+                artists_redis.connection,
+                catalog
+            )
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

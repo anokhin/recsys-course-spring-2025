@@ -1,0 +1,33 @@
+# LISTENING PATTERN INSIGHTS
+
+## Overall Statistics
+Total tracks analyzed: 7,631,910
+Total users: 10,000
+Total sessions: 28,067
+Average listen ratio: 0.01
+Track completion rate: 0.0%
+
+## Duration Analysis
+0-2min: 3.1% of tracks, avg listen ratio: 0.01, completion rate: 0.0%
+2-3min: 26.1% of tracks, avg listen ratio: 0.01, completion rate: 0.0%
+3-4min: 49.0% of tracks, avg listen ratio: 0.00, completion rate: 0.0%
+4-5min: 16.7% of tracks, avg listen ratio: 0.00, completion rate: 0.0%
+5-10min: 5.0% of tracks, avg listen ratio: 0.00, completion rate: 0.0%
+10min+: 0.1% of tracks, avg listen ratio: 0.00, completion rate: 0.0%
+
+## Genre Analysis (Top 10)
+[10]: listen ratio: 0.01, completion rate: 0.0%
+[6]: listen ratio: 0.01, completion rate: 0.0%
+[53]: listen ratio: 0.01, completion rate: 0.0%
+[1]: listen ratio: 0.01, completion rate: 0.0%
+[81]: listen ratio: 0.00, completion rate: 0.0%
+[36]: listen ratio: 0.00, completion rate: 0.0%
+[2]: listen ratio: 0.00, completion rate: 0.0%
+[47]: listen ratio: 0.00, completion rate: 0.0%
+[149]: listen ratio: 0.00, completion rate: 0.0%
+[147]: listen ratio: 0.00, completion rate: 0.0%
+
+## User Engagement
+Average tracks per user: 763.2
+Average sessions per user: 2.8
+Average tracks per session: 531.1

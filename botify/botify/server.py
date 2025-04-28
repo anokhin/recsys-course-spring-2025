@@ -1,10 +1,10 @@
 import json
 import logging
-import random
 import time
 from dataclasses import asdict
 from datetime import datetime
 
+import torch
 from flask import Flask
 from flask_redis import Redis
 from flask_restful import Resource, Api, abort, reqparse
@@ -12,13 +12,11 @@ from gevent.pywsgi import WSGIServer
 
 from botify.data import DataLogger, Datum
 from botify.experiment import Experiments, Treatment
+from botify.recommenders.my_recommender import MyRecommender
 from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
 from botify.recommenders.toppop import TopPop
-from botify.recommenders.indexed import Indexed
 from botify.track import Catalog
-
-from recommenders.sequential import Sequential
 
 root = logging.getLogger()
 root.setLevel("INFO")
@@ -30,9 +28,13 @@ api = Api(app)
 tracks_redis = Redis(app, config_prefix="REDIS_TRACKS")
 artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
-recommendations_lfm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM")
-recommendations_dpp = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DIVERSITY_DPP")
-recommendations_auth = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DIVERSITY_AUTHOR")
+
+my_recommendations = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_MY")
+recommendations_dssm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DSSM")
+history_redis = Redis(app, config_prefix="REDIS_HISTORY")
+fav_redis = Redis(app, config_prefix="REDIS_FAV")
+statistic_genre_redis = Redis(app, config_prefix="REDIS_STATISTIC_GENRE")
+statistic_artist_redis = Redis(app, config_prefix="REDIS_STATISTIC_ARTIST")
 
 data_logger = DataLogger(app)
 
@@ -40,13 +42,14 @@ catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
 catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
 catalog.upload_recommendations(
-    recommendations_lfm.connection, "RECOMMENDATIONS_LFM_FILE_PATH"
+    my_recommendations.connection, "RECOMMENDATIONS_MY_FILE_PATH"
 )
 catalog.upload_recommendations(
-    recommendations_dpp.connection, "RECOMMENDATIONS_DIVERSITY_DPP_FILE_PATH"
+    recommendations_dssm.connection, "RECOMMENDATIONS_DSSM_FILE_PATH"
 )
+
 catalog.upload_recommendations(
-    recommendations_auth.connection, "RECOMMENDATIONS_DIVERSITY_AUTHOR_FILE_PATH"
+    fav_redis.connection, 'FAV_PATH', key_recommendations='fav_tracks'
 )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
@@ -54,6 +57,9 @@ top_tracks = TopPop.load_from_json("./data/top_tracks.json")
 parser = reqparse.RequestParser()
 parser.add_argument("track", type=int, location="json", required=True)
 parser.add_argument("time", type=float, location="json", required=True)
+
+
+track_embeddings = torch.load('./data/learned_track_embeddings_interaction_model_v3_2_bert_bert_base_multilingual.pth', map_location=torch.device('cpu'), weights_only=False)
 
 
 class Hello(Resource):
@@ -80,14 +86,14 @@ class NextTrack(Resource):
         args = parser.parse_args()
 
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DIVERSITY.assign(user)
+        treatment = Experiments.PERSONALIZED.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_dpp.connection, catalog, fallback)
-        elif treatment == Treatment.T2:
-            recommender = Sequential(recommendations_auth.connection, catalog, fallback)
+            recommender = MyRecommender(my_recommendations.connection, catalog, fallback, track_embeddings,
+                                        history_redis.connection, fav_redis.connection, statistic_genre_redis.connection,
+                                        tracks_redis.connection, statistic_artist_redis.connection)
         else:
-            recommender = Sequential(recommendations_lfm.connection, catalog, fallback)
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

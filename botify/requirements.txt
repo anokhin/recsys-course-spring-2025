@@ -5,3 +5,6 @@ python-json-logger==2.0.2
 mmh3==3.0.0
 gevent
 scikit-learn
+torch
+numpy==2.0.2
+Werkzeug==2.2.2

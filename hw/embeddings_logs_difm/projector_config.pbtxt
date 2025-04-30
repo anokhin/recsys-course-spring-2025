@@ -1,0 +1,8 @@
+embeddings {
+  tensor_name: "user_embeddings:00000"
+  tensor_path: "00000/user_embeddings/tensors.tsv"
+}
+embeddings {
+  tensor_name: "track_embeddings:00000"
+  tensor_path: "00000/track_embeddings/tensors.tsv"
+}

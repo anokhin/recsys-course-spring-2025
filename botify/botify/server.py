@@ -4,6 +4,8 @@ import random
 import time
 from dataclasses import asdict
 from datetime import datetime
+import numpy as np
+import faiss
 
 from flask import Flask
 from flask_redis import Redis
@@ -16,6 +18,7 @@ from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
+from botify.recommenders.my_indexed import MyIndexed
 from botify.track import Catalog
 
 from recommenders.sequential import Sequential
@@ -33,6 +36,9 @@ artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 recommendations_lfm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM")
 recommendations_dpp = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DIVERSITY_DPP")
 recommendations_auth = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DIVERSITY_AUTHOR")
+recommendations_user_tracks = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_USER_TRACKS")
+recommendations_difm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DIFM")
+recent_tracks_redis = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_RECENT_TRACKS")
 
 data_logger = DataLogger(app)
 
@@ -47,6 +53,9 @@ catalog.upload_recommendations(
 )
 catalog.upload_recommendations(
     recommendations_auth.connection, "RECOMMENDATIONS_DIVERSITY_AUTHOR_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_difm.connection, "RECOMMENDATIONS_DIFM_FILE_PATH"
 )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
@@ -80,14 +89,16 @@ class NextTrack(Resource):
         args = parser.parse_args()
 
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DIVERSITY.assign(user)
+        treatment = Experiments.DIFM.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_dpp.connection, catalog, fallback)
-        elif treatment == Treatment.T2:
-            recommender = Sequential(recommendations_auth.connection, catalog, fallback)
+            recommender = MyIndexed(recommendations_difm.connection,
+                                    catalog,
+                                    fallback,
+                                    recommendations_user_tracks.connection,
+                                    recent_tracks_redis.connection)
         else:
-            recommender = Sequential(recommendations_lfm.connection, catalog, fallback)
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

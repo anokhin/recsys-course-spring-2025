@@ -32,6 +32,7 @@ artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
 recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
 recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
+recommendations_hw2 = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_HW2")
 
 data_logger = DataLogger(app)
 
@@ -43,6 +44,9 @@ catalog.upload_recommendations(
 )
 catalog.upload_recommendations(
     recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_hw2.connection, "RECOMMENDATIONS_HW2_FILE_PATH"
 )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
@@ -76,12 +80,12 @@ class NextTrack(Resource):
         args = parser.parse_args()
 
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
+        treatment = Experiments.HW_2.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
+            recommender = Indexed(recommendations_hw2.connection, catalog, fallback)
         else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

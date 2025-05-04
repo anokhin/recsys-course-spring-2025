@@ -15,6 +15,8 @@ run:
 	cd sim && ../$(PYTHON) -m sim.run --episodes 1000 --config config/env.yml multi --processes 4
 	# fixme add global paths
 
+	mkdir -p ../data4exp
+
 	cd script && ../$(PYTHON) dataclient.py --recommender 2 log2local ../data4exp/graphbased_vs_sticky_$(shell echo $$RANDOM | md5 | head -c 4)
 
 venv:

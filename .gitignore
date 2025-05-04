@@ -5,6 +5,12 @@ __pycache__
 botify/log/*
 .DS_Store
 
+*/recsys-2025
+jupyter/runs
+jupyter/lightning_logs
+botify/data/recommendations_dssm_*.json
+!botify/data/recommendations_dssm_layernorm_params_arch_3.json
+
 # LaTeX
 *.aux
 *.glo

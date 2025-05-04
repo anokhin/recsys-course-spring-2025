@@ -68,11 +68,12 @@ class Experiments:
     TOP_POP = Experiment("TOP_POP", Split.FOUR_WAY)
     USER_BASED = Experiment("USER_BASED", Split.HALF_HALF)
     PERSONALIZED = Experiment("PERSONALIZED", Split.HALF_HALF)
-    DSSM = Experiment("DSSM", Split.HALF_HALF)
     CONTEXTUAL_DSSM_LFM = Experiment("CONTEXTUAL_DSSM_LFM", Split.FOUR_WAY)
     GCF = Experiment("GCF", Split.HALF_HALF)
     DLRM = Experiment("DLRM", Split.HALF_HALF)
+    NCF = Experiment("NCF", Split.HALF_HALF)
+    DSSM = Experiment("DSSM", Split.HALF_HALF)
     ALL = Experiment("ALL", Split.EIGHT_WAY)
 
     def __init__(self):
-        self.experiments = [Experiments.DLRM]
+        self.experiments = [Experiments.DSSM]

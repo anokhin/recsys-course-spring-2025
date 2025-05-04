@@ -18,8 +18,7 @@
   "REDIS_RECOMMENDATIONS_DSSM_HOST": "redis",
   "REDIS_RECOMMENDATIONS_DSSM_PORT": 6379,
   "REDIS_RECOMMENDATIONS_DSSM_DB": 4,
-
-  "RECOMMENDATIONS_DSSM_FILE_PATH": "./data/recommendations_dssm.json",
+  "RECOMMENDATIONS_DSSM_FILE_PATH": "./data/recommendations_dssm_layernorm_params_arch_3.json",
 
   "REDIS_RECOMMENDATIONS_GCF_HOST": "redis",
   "REDIS_RECOMMENDATIONS_GCF_PORT": 6379,
@@ -32,6 +31,11 @@
   "REDIS_RECOMMENDATIONS_DLRM_DB": 6,
 
   "RECOMMENDATIONS_DLRM_FILE_PATH": "./data/recommendations_dlrm.json",
+
+  "REDIS_RECOMMENDATIONS_NCF_HOST": "redis",
+  "REDIS_RECOMMENDATIONS_NCF_PORT": 6379,
+  "REDIS_RECOMMENDATIONS_NCF_DB": 6,
+  "RECOMMENDATIONS_NCF_FILE_PATH": "./data/recommendations_ncf_my.json",
 
   "TRACKS_CATALOG": "./data/tracks.json",
   "DATA_LOG_FILE": "./log/data.json",

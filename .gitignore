@@ -3,7 +3,12 @@ sim/out/
 __pycache__
 .ipynb_checkpoints
 botify/log/*
+botify/data/*
 .DS_Store
+Archive
+data
+venv
+data4exp
 
 # LaTeX
 *.aux

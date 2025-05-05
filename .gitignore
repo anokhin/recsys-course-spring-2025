@@ -4,30 +4,8 @@ __pycache__
 .ipynb_checkpoints
 botify/log/*
 .DS_Store
+jupyter/lightning_logs
+jupyter/runs
+jupyter/.ipynb_checkpoints
 
-# LaTeX
-*.aux
-*.glo
-*.idx
-*.log
-*.toc
-*.ist
-*.acn
-*.acr
-*.alg
-*.bbl
-*.blg
-*.dvi
-*.glg
-*.gls
-*.ilg
-*.ind
-*.lof
-*.lot
-*.maf
-*.mtc
-*.mtc1
-*.out
-*.synctex.gz
-*.nav
-*.snm
+

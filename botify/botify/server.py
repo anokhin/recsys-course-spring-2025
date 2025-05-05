@@ -16,9 +16,10 @@ from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
+from botify.recommenders.contextual import Contextual
+from botify.recommenders.dionis import SessionRecommenderDionis
 from botify.track import Catalog
 
-from recommenders.sequential import Sequential
 
 root = logging.getLogger()
 root.setLevel("INFO")
@@ -30,8 +31,14 @@ api = Api(app)
 tracks_redis = Redis(app, config_prefix="REDIS_TRACKS")
 artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
-recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
-recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
+recommendations_ub = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_UB")
+recommendations_lfm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM")
+recommendations_ncf = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_NCF")
+recommendations_dssm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DSSM")
+recommendations_contextual = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_CONTEXTUAL")
+recommendations_gcf = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_GCF")
+
+history_redis = Redis(app, config_prefix="REDIS_HISTORY")
 
 data_logger = DataLogger(app)
 
@@ -39,10 +46,23 @@ catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
 catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
 catalog.upload_recommendations(
-    recommendations_svd.connection, "RECOMMENDATIONS_DEBIAS_SVD_FILE_PATH"
+    recommendations_ub.connection, "RECOMMENDATIONS_UB_FILE_PATH"
 )
 catalog.upload_recommendations(
-    recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
+    recommendations_lfm.connection, "RECOMMENDATIONS_LFM_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_ncf.connection, "RECOMMENDATIONS_NCF_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_dssm.connection, "RECOMMENDATIONS_DSSM_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_contextual.connection, "RECOMMENDATIONS_CONTEXTUAL_FILE_PATH",
+    key_object='track', key_recommendations='recommendations'
+)
+catalog.upload_recommendations(
+    recommendations_gcf.connection, "RECOMMENDATIONS_GCF_FILE_PATH"
 )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
@@ -51,6 +71,21 @@ parser = reqparse.RequestParser()
 parser.add_argument("track", type=int, location="json", required=True)
 parser.add_argument("time", type=float, location="json", required=True)
 
+session_treatment = SessionRecommenderDionis(
+    history_redis.connection,
+    catalog,
+    recommendations_redis={
+        'lgcf': recommendations_gcf.connection,
+        'lfm': recommendations_lfm.connection,
+        'dssm': recommendations_dssm.connection,
+
+    },
+    fallback=Indexed(recommendations_gcf.connection, catalog, Random(tracks_redis.connection)),
+    indexed_sample_size=15,
+    use_lfm=True,
+    use_lgcf_m=True,
+    use_dssm=False,
+)
 
 class Hello(Resource):
     def get(self):
@@ -72,16 +107,14 @@ class Track(Resource):
 class NextTrack(Resource):
     def post(self, user: int):
         start = time.time()
-
         args = parser.parse_args()
-
-        fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
+        # fallback = Random(tracks_redis.connection)
+        treatment = Experiments.DNS.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
+            recommender = session_treatment
         else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

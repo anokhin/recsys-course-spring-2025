@@ -68,13 +68,14 @@ class Experiments:
     TOP_POP = Experiment("TOP_POP", Split.FOUR_WAY)
     USER_BASED = Experiment("USER_BASED", Split.HALF_HALF)
     PERSONALIZED = Experiment("PERSONALIZED", Split.HALF_HALF)
+    LFM = Experiment("LFM", Split.HALF_HALF)
+    NCF = Experiment("NCF", Split.HALF_HALF)
     DSSM = Experiment("DSSM", Split.HALF_HALF)
-    CONTEXTUAL_DSSM_LFM = Experiment("CONTEXTUAL_DSSM_LFM", Split.FOUR_WAY)
+    CONTEXTUAL = Experiment("CONTEXTUAL", Split.HALF_HALF)
+    CONTEXTUAL_DSSM_LFM = Experiment("CONTEXTUAL_DSSM_LFM", Split.HALF_HALF)
     GCF = Experiment("GCF", Split.HALF_HALF)
-    DLRM = Experiment("DLRM", Split.HALF_HALF)
+    DNS = Experiment("DNS", Split.HALF_HALF)
     ALL = Experiment("ALL", Split.EIGHT_WAY)
-    DIVERSITY = Experiment("DIVERSITY", Split.THREE_WAY)
-    DEBIAS = Experiment("DEBIAS", Split.HALF_HALF)
 
     def __init__(self):
-        self.experiments = [Experiments.DEBIAS]
+        self.experiments = [Experiments.DNS]

@@ -75,6 +75,8 @@ class Experiments:
     ALL = Experiment("ALL", Split.EIGHT_WAY)
     DIVERSITY = Experiment("DIVERSITY", Split.THREE_WAY)
     DEBIAS = Experiment("DEBIAS", Split.HALF_HALF)
+    
+    GRAPHBASED_VS_STICKY = Experiment("GRAPHBASED_VS_STICKY", Split.HALF_HALF)
 
     def __init__(self):
-        self.experiments = [Experiments.DEBIAS]
+        self.experiments = [Experiments.GRAPHBASED_VS_STICKY]

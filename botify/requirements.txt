@@ -5,3 +5,5 @@ python-json-logger==2.0.2
 mmh3==3.0.0
 gevent
 scikit-learn
+networkx
+numpy

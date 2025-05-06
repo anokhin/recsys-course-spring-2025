@@ -16,6 +16,7 @@ from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
+from botify.recommenders.graph_based import GraphBasedRecommender
 from botify.track import Catalog
 
 from recommenders.sequential import Sequential
@@ -32,18 +33,18 @@ artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
 recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
 recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
+recommendations_graph_based = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_GRAPH_BASED")
 
 data_logger = DataLogger(app)
 
 catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
 catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
-catalog.upload_recommendations(
-    recommendations_svd.connection, "RECOMMENDATIONS_DEBIAS_SVD_FILE_PATH"
-)
-catalog.upload_recommendations(
-    recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
-)
+
+# у меня онлайновый метод, это не нужно, но я это тоже пробовал
+# catalog.upload_recommendations(
+#     recommendations_graph_based.connection, "RECOMMENDATIONS_GRAPH_BASED_FILE_PATH"
+# )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
 
@@ -75,13 +76,14 @@ class NextTrack(Resource):
 
         args = parser.parse_args()
 
-        fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
+        treatment = Experiments.GRAPHBASED_VS_STICKY.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
+            # fallback is already Random
+            recommender = GraphBasedRecommender(tracks_redis.connection, artists_redis.connection, catalog)
         else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
+            # fallback is already Random
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

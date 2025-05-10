@@ -1,6 +1,5 @@
 import json
 import logging
-import random
 import time
 from dataclasses import asdict
 from datetime import datetime
@@ -14,11 +13,7 @@ from botify.data import DataLogger, Datum
 from botify.experiment import Experiments, Treatment
 from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
-from botify.recommenders.toppop import TopPop
-from botify.recommenders.indexed import Indexed
 from botify.track import Catalog
-
-from recommenders.sequential import Sequential
 
 root = logging.getLogger()
 root.setLevel("INFO")
@@ -28,24 +23,15 @@ app.config.from_file("config.json", load=json.load)
 api = Api(app)
 
 tracks_redis = Redis(app, config_prefix="REDIS_TRACKS")
+# TODO Семинар 1, Шаг 1.2 - Создаем коннект к новой базе
 artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
-
-recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
-recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
 
 data_logger = DataLogger(app)
 
 catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
 catalog.upload_tracks(tracks_redis.connection)
+# TODO Семинар 1, Шаг 2 - Загружаем в новую базу данные о треках исполнителей
 catalog.upload_artists(artists_redis.connection)
-catalog.upload_recommendations(
-    recommendations_svd.connection, "RECOMMENDATIONS_DEBIAS_SVD_FILE_PATH"
-)
-catalog.upload_recommendations(
-    recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
-)
-
-top_tracks = TopPop.load_from_json("./data/top_tracks.json")
 
 parser = reqparse.RequestParser()
 parser.add_argument("track", type=int, location="json", required=True)
@@ -75,13 +61,14 @@ class NextTrack(Resource):
 
         args = parser.parse_args()
 
+        # TODO Семинар 1, Шаг 4.2 - Используем эксперимент для выбора рекомендера между Random и StickyArtist.
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
+        treatment = Experiments.STICKY_ARTIST.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
         else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
+            recommender = fallback
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

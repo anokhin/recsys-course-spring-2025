@@ -16,6 +16,7 @@ from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
+from botify.recommenders.hybrid_heuristic import HybridHeuristic
 from botify.track import Catalog
 
 from recommenders.sequential import Sequential
@@ -29,6 +30,11 @@ api = Api(app)
 
 tracks_redis = Redis(app, config_prefix="REDIS_TRACKS")
 artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
+recommendations_ub = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_UB")
+recommendations_dssm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DSSM")
+recommendations_contextual = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_CONTEXTUAL")
+recommendations_div = Redis(app, config_prefix="REDIS_TRACKS_WITH_DIVERSE_RECS")
+
 
 recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
 recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
@@ -39,13 +45,27 @@ catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
 catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
 catalog.upload_recommendations(
+    recommendations_ub.connection, "RECOMMENDATIONS_UB_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_dssm.connection, "RECOMMENDATIONS_DSSM_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_contextual, "RECOMMENDATIONS_CONTEXTUAL_FILE_PATH",
+    key_object='track', key_recommendations='recommendations'
+)
+catalog.upload_recommendations(
+    recommendations_div, "TRACKS_WITH_DIVERSE_RECS_CATALOG_FILE_PATH",
+    key_object='track', key_recommendations='recommendations'
+)
+catalog.upload_recommendations(
     recommendations_svd.connection, "RECOMMENDATIONS_DEBIAS_SVD_FILE_PATH"
 )
 catalog.upload_recommendations(
     recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
 )
 
-top_tracks = TopPop.load_from_json("./data/top_tracks.json")
+top_tracks = TopPop.load_from_json(app.config["TOP_TRACKS"])
 
 parser = reqparse.RequestParser()
 parser.add_argument("track", type=int, location="json", required=True)
@@ -75,15 +95,27 @@ class NextTrack(Resource):
 
         args = parser.parse_args()
 
-        fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
+        treatment = Experiments.HW2.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
+            recommender = HybridHeuristic(
+                tracks_redis=tracks_redis.connection,
+                artists_redis=artists_redis.connection,
+                catalog=catalog,
+                rec_dssm=recommendations_dssm,
+                rec_contextual=recommendations_contextual,
+                rec_diverse=recommendations_div,
+                rec_ub=recommendations_ub,
+                top_tracks_path=app.config["TOP_TRACKS"],
+                epsilon=0.04,
+            )
         else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
+            recommender = Indexed(recommendations_dssm.connection, catalog, Random(tracks_redis.connection))
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
+        if recommendation is None:
+            app.logger.warning("Recommender returned None, use Random fallback")
+            recommendation = Indexed(recommendations_dssm.connection, catalog, Random(tracks_redis.connection))
 
         data_logger.log(
             "next",
@@ -103,6 +135,11 @@ class LastTrack(Resource):
     def post(self, user: int):
         start = time.time()
         args = parser.parse_args()
+        if hasattr(self, "recommender") and isinstance(self.recommender, HybridHeuristic):
+            self.recommender.register_last(
+                user, args.track, args.time, tracks_redis.connection
+            )
+
         data_logger.log(
             "last",
             Datum(

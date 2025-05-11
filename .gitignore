@@ -34,3 +34,6 @@ botify/log/*
 
 # venv
 recsys-env
+
+# data
+collected-data

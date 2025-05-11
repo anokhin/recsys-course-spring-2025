@@ -52,7 +52,7 @@ def upload_logs_to_hdfs(command_args):
     remote_temp_dir = "tmp/" + str(int(time.time()))
 
     recommenders = [
-        f"botify-recommender-{i}" for i in range(1, command_args.recommender + 1)
+        f"botify_recommender_{i}" for i in range(1, command_args.recommender + 1)
     ]
 
     ssh = None
@@ -111,7 +111,7 @@ def download_logs(command_args):
     os.makedirs(local_dir)
 
     recommenders = [
-        f"botify-recommender-{i}" for i in range(1, command_args.recommender + 1)
+        f"botify_recommender_{i}" for i in range(1, command_args.recommender + 1)
     ]
 
     for recommender in recommenders:

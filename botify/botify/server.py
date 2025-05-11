@@ -14,6 +14,7 @@ from botify.data import DataLogger, Datum
 from botify.experiment import Experiments, Treatment
 from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
+from botify.recommenders.my_rec import MyRecommender
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
 from botify.track import Catalog
@@ -32,6 +33,8 @@ artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
 recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
 recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
+recommendations_dssm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DSSM")
+recommendations_div = Redis(app, config_prefix="REDIS_TRACKS_WITH_DIVERSE_RECS")
 
 data_logger = DataLogger(app)
 
@@ -43,6 +46,13 @@ catalog.upload_recommendations(
 )
 catalog.upload_recommendations(
     recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_dssm.connection, "RECOMMENDATIONS_DSSM_FILE_PATH"
+)
+catalog.upload_recommendations(
+    recommendations_div, "TRACKS_WITH_DIVERSE_RECS_CATALOG_FILE_PATH",
+    key_object='track', key_recommendations='recommendations'
 )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
@@ -76,12 +86,12 @@ class NextTrack(Resource):
         args = parser.parse_args()
 
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
+        treatment = Experiments.HW2.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
+            recommender = MyRecommender(tracks_redis.connection, artists_redis.connection, catalog, Random(tracks_redis.connection))
         else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 

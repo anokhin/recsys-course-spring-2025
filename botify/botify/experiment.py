@@ -14,6 +14,7 @@ class Treatment(Enum):
     T7 = 7
     T8 = 8
     T9 = 9
+    T10 = 10
 
 
 class Split(Enum):
@@ -24,6 +25,7 @@ class Split(Enum):
     SEVEN_WAY = 7
     EIGHT_WAY = 8
     NINE_WAY = 9
+    TEN_WAY = 10
 
 
 class Experiment:
@@ -63,7 +65,7 @@ class Experiments:
     """
 
     AA = Experiment("AA", Split.HALF_HALF)
-    STICKY_ARTIST = Experiment("STICKY_ARTIST", Split.NINE_WAY)
+    STICKY_ARTIST = Experiment("STICKY_ARTIST", Split.TEN_WAY)
 
     TOP_POP = Experiment("TOP_POP", Split.FOUR_WAY)
     USER_BASED = Experiment("USER_BASED", Split.HALF_HALF)

@@ -17,6 +17,7 @@ class Treatment(Enum):
 
 
 class Split(Enum):
+    NONE = 1
     HALF_HALF = 2
     THREE_WAY = 3
     FOUR_WAY = 4
@@ -75,6 +76,7 @@ class Experiments:
     ALL = Experiment("ALL", Split.EIGHT_WAY)
     DIVERSITY = Experiment("DIVERSITY", Split.THREE_WAY)
     DEBIAS = Experiment("DEBIAS", Split.HALF_HALF)
+    HW2 = Experiment("HW2", Split.HALF_HALF)
 
     def __init__(self):
-        self.experiments = [Experiments.DEBIAS]
+        self.experiments = [Experiments.HW2]

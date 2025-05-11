@@ -7,6 +7,7 @@ from datetime import datetime
 
 from flask import Flask
 from flask_redis import Redis
+import redis
 from flask_restful import Resource, Api, abort, reqparse
 from gevent.pywsgi import WSGIServer
 
@@ -16,6 +17,7 @@ from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
+from botify.recommenders.lfm import LightFMRecommender
 from botify.track import Catalog
 
 from recommenders.sequential import Sequential
@@ -27,23 +29,32 @@ app = Flask(__name__)
 app.config.from_file("config.json", load=json.load)
 api = Api(app)
 
-tracks_redis = Redis(app, config_prefix="REDIS_TRACKS")
-artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
+tracks_redis = Redis(app, "REDIS_TRACKS")
+artists_redis = Redis(app, "REDIS_ARTIST")
 
-recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
-recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
+# recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
+# recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
+# recommendations_lfm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM")
+# recommendations_dssm = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DSSM")
 
 data_logger = DataLogger(app)
 
 catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
+
 catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
-catalog.upload_recommendations(
-    recommendations_svd.connection, "RECOMMENDATIONS_DEBIAS_SVD_FILE_PATH"
-)
-catalog.upload_recommendations(
-    recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
-)
+# catalog.upload_recommendations(
+#     recommendations_svd.connection, "RECOMMENDATIONS_DEBIAS_SVD_FILE_PATH"
+# )
+# catalog.upload_recommendations(
+#     recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
+# )
+# catalog.upload_recommendations(
+#     recommendations_lfm.connection, "RECOMMENDATIONS_LFM_FILE_PATH"
+# )
+# catalog.upload_recommendations(
+#     recommendations_dssm.connection, "RECOMMENDATIONS_DSSM_FILE_PATH"
+# )
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
 
@@ -70,20 +81,19 @@ class Track(Resource):
 
 
 class NextTrack(Resource):
+    fallback4 = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
+    recommenders_by_treatment = {
+        Treatment.T1: LightFMRecommender(catalog, tracks_redis.connection, fallback4, topn=100, p=0.1),
+        Treatment.C: StickyArtist(tracks_redis.connection, artists_redis.connection, catalog),
+    }
+        
     def post(self, user: int):
         start = time.time()
 
         args = parser.parse_args()
 
-        fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
-
-        if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
-        else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
-
-        recommendation = recommender.recommend_next(user, args.track, args.time)
+        treatment = Experiments.HW2.assign(user)
+        recommendation = NextTrack.recommenders_by_treatment[treatment].recommend_next(user, args.track, args.time)
 
         data_logger.log(
             "next",

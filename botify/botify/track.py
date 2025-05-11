@@ -42,19 +42,21 @@ class Catalog:
 
     def upload_tracks(self, redis_tracks):
         self.app.logger.info(f"Uploading tracks to redis")
-        for track in self.tracks:
-            redis_tracks.set(track.track, self.to_bytes(track))
+        redis_tracks.mset({ track.track: self.to_bytes(track) for track in self.tracks })
+        # for track in self.tracks:
+        #     redis_tracks.set(track.track, self.to_bytes(track))
 
     def upload_artists(self, redis):
         self.app.logger.info(f"Uploading artists to redis")
         uploaded = 0
         sorted_tracks = sorted(self.tracks, key=lambda track: track.artist)
+        obj = {}
         for artist, tracks in itertools.groupby(
             sorted_tracks, key=lambda track: track.artist
         ):
-            redis.set(artist, self.to_bytes([track.track for track in tracks]))
+            obj[artist] = self.to_bytes([track.track for track in tracks])
             uploaded += 1
-
+        redis.mset(obj)
         self.app.logger.info(f"Uploaded {uploaded} artists")
 
     def upload_recommendations(

@@ -1,3 +1,4 @@
+Werkzeug==2.0.1
 Flask==2.0.1
 Flask-RESTful==0.3.9
 Flask-And-Redis==1.0.0
@@ -5,3 +6,6 @@ python-json-logger==2.0.2
 mmh3==3.0.0
 gevent
 scikit-learn
+lightfm==1.17
+numpy==1.18
+gensim

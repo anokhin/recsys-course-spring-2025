@@ -73,8 +73,12 @@ class Experiments:
     GCF = Experiment("GCF", Split.HALF_HALF)
     DLRM = Experiment("DLRM", Split.HALF_HALF)
     ALL = Experiment("ALL", Split.EIGHT_WAY)
-    DIVERSITY = Experiment("DIVERSITY", Split.THREE_WAY)
-    DEBIAS = Experiment("DEBIAS", Split.HALF_HALF)
+    LFM_BIG = Experiment("LFM_BIG", Split.HALF_HALF)
+    TREE = Experiment("TREE", Split.HALF_HALF)
+    TOP30 = Experiment("TOP30", Split.HALF_HALF)
+    TOP_SHUFFLE = Experiment("TOP_SHUFFLE", Split.HALF_HALF)
+    MVP = Experiment("MVP", Split.HALF_HALF)
 
     def __init__(self):
-        self.experiments = [Experiments.DEBIAS]
+        self.experiments = [Experiments.MVP]
+        #self.experiments = [Experiments.TOP_SHUFFLE]

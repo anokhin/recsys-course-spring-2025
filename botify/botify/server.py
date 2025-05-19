@@ -14,11 +14,10 @@ from botify.data import DataLogger, Datum
 from botify.experiment import Experiments, Treatment
 from botify.recommenders.random import Random
 from botify.recommenders.sticky_artist import StickyArtist
+from botify.recommenders.mvp import MVP
 from botify.recommenders.toppop import TopPop
 from botify.recommenders.indexed import Indexed
 from botify.track import Catalog
-
-from recommenders.sequential import Sequential
 
 root = logging.getLogger()
 root.setLevel("INFO")
@@ -30,26 +29,34 @@ api = Api(app)
 tracks_redis = Redis(app, config_prefix="REDIS_TRACKS")
 artists_redis = Redis(app, config_prefix="REDIS_ARTIST")
 
-recommendations_svd = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD")
-recommendations_svd_ips = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DEBIAS_SVD_IPS")
-
 data_logger = DataLogger(app)
 
 catalog = Catalog(app).load(app.config["TRACKS_CATALOG"])
 catalog.upload_tracks(tracks_redis.connection)
 catalog.upload_artists(artists_redis.connection)
-catalog.upload_recommendations(
-    recommendations_svd.connection, "RECOMMENDATIONS_DEBIAS_SVD_FILE_PATH"
-)
-catalog.upload_recommendations(
-    recommendations_svd_ips.connection, "RECOMMENDATIONS_DEBIAS_SVD_IPS_FILE_PATH"
-)
+
+users_ugd = Redis(app, config_prefix="REDIS_USERS_UGD")
+catalog.load_users(app.config["REDIS_USERS_UGD_PATH"])
+catalog.upload_ugd(users_ugd.connection)
+
+session_tracks = Redis(app, config_prefix="REDIS_SESSION_TRACKS")
+session_tracks.flushdb()
 
 top_tracks = TopPop.load_from_json("./data/top_tracks.json")
+
+lfm_recs = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_LFM_RECS")
+catalog.upload_recommendations(lfm_recs.connection, "RECOMMENDATIONS_LFM_RECS_FILE_PATH")
+
+dpp_recs = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_DPP_RECS")
+catalog.upload_recommendations(dpp_recs.connection, "RECOMMENDATIONS_DPP_RECS_FILE_PATH")
 
 parser = reqparse.RequestParser()
 parser.add_argument("track", type=int, location="json", required=True)
 parser.add_argument("time", type=float, location="json", required=True)
+
+recommendations_top_shuffle = Redis(app, config_prefix="REDIS_RECOMMENDATIONS_TOP_SHUFFLE")
+catalog.upload_recommendations(
+    recommendations_top_shuffle.connection, "RECOMMENDATIONS_TOP_SHUFFLE_FILE_PATH")
 
 
 class Hello(Resource):
@@ -76,12 +83,15 @@ class NextTrack(Resource):
         args = parser.parse_args()
 
         fallback = Random(tracks_redis.connection)
-        treatment = Experiments.DEBIAS.assign(user)
+        treatment = Experiments.MVP.assign(user)
+        #treatment = Experiments.TOP_SHUFFLE.assign(user)
 
         if treatment == Treatment.T1:
-            recommender = Sequential(recommendations_svd_ips.connection, catalog, fallback)
+            #recommender = Indexed(recommendations_top_shuffle.connection, catalog, fallback)
+            recommender = MVP(tracks_redis.connection, artists_redis.connection, catalog, users_ugd.connection,
+                              session_tracks.connection, lfm_recs.connection, dpp_recs.connection)
         else:
-            recommender = Sequential(recommendations_svd.connection, catalog, fallback)
+            recommender = StickyArtist(tracks_redis.connection, artists_redis.connection, catalog)
 
         recommendation = recommender.recommend_next(user, args.track, args.time)
 
@@ -121,7 +131,7 @@ api.add_resource(Track, "/track/<int:track>")
 api.add_resource(NextTrack, "/next/<int:user>")
 api.add_resource(LastTrack, "/last/<int:user>")
 
-app.logger.info(f"Botify service stared")
+app.logger.info(f"Botify service started")
 
 if __name__ == "__main__":
     http_server = WSGIServer(("", 5001), app)

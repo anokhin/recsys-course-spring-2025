@@ -3,7 +3,6 @@ import random
 from .random import Random
 from .recommender import Recommender
 
-
 class StickyArtist(Recommender):
     def __init__(self, tracks_redis, artists_redis, catalog):
         self.fallback = Random(tracks_redis)
@@ -13,6 +12,7 @@ class StickyArtist(Recommender):
 
     def recommend_next(self, user: int, prev_track: int, prev_track_time: float) -> int:
         track_data = self.tracks_redis.get(prev_track)
+
         if track_data is not None:
             track = self.catalog.from_bytes(track_data)
         else:

@@ -85,10 +85,139 @@
 Проблемы
 \begin{enumerate}[<+->]
 \item Оцениваем айтемы по-отдельности, а показываем по несколько (лентой)
-\item {\color{blue} Смещение между распределениями на обучении и применении}
-\item {\color{blue} Модель не объясняет, почему именно эти айтемы подходят пользователю}
-\item Не учитывается долгострочный эффект рекомендаций
+\item Смещение между распределениями на обучении и применении
+\item Модель не объясняет, почему именно эти айтемы подходят пользователю
+\item {\color{blue} Не учитывается долгострочный эффект рекомендаций}
 \end{enumerate}
+
+\end{frame}
+
+\section{Разнообразие в рекомендательных системах}
+
+\begin{frame}{Разнообразие / Diversity}
+
+\begin{center}
+\includegraphics[scale=0.22]{images/diversity.png}
+\end{center}
+
+\end{frame}
+
+\begin{frame}{Два подхода к разнообразию}
+
+\begin{itemize}
+\item {\bf Разнообразие для exploration} \\
+помогает пользователям находить новые айтемы, а рекомендеру собирать данные
+\item {\bf Разнообразие для utility} \\
+помогает убирать избыточные айтемы
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{Набираем айтемы с разными аспектами}
+
+$f$ - аспект (признак) айтема, $p(f | i)$ -- вероятность найти аспект у айтема $i$
+
+\vfill
+
+Распределение аспекта у пользователя
+
+\[
+p(f | u) = \frac{\sum_{i \in I_u} p(f | i)}{|I_u|}  
+\]
+
+Распределение аспекта в рекомендациях
+\[
+q(f | u) = \frac{\sum_{i \in RL} p(f | i)}{|RL|}
+\]
+
+\begin{tcolorbox}[colback=info!5,colframe=info!80,title=]
+Формируем список так, чтобы $q(f | u)$ совпало с $p(f | u)$
+\end{tcolorbox}
+
+\end{frame}
+
+\begin{frame}{Жадное переранжирование}
+
+\begin{tcolorbox}[colback=info!5,colframe=info!80,title=]
+Добавляем в список рекомендаций айтем с максимальным значением
+\[
+(1 - \lambda) \cdot s(u, i) + \lambda \cdot gain(i, RL),
+\]
+пока не получим список нужной длины.
+\end{tcolorbox}
+
+\vfill
+
+\begin{itemize}
+\item $s(u, i)$ -- релевантность айтема $i$ для пользователя $u$ 
+\item $gain(i, RL) = div(RL \cup \{i\}) - div(RL)$ -- улучшение разнообразия при добавлении айтема
+\item $\lambda$ -- гиперпараметр
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{A Comparison of Calibrated and Intent-Aware Recommendations \cite{BRIDGE}}
+\begin{center}
+\includegraphics[scale=0.5]{images/spad.png}
+\end{center}
+\end{frame}
+
+\begin{frame}{Учим разнообразие вместе с моделью 1}
+
+\begin{center}
+Controllable Multi-Interest Framework for Recommendation \cite{ALIBABA}
+\end{center}
+
+\begin{columns}
+\begin{column}{0.45\textwidth}
+\begin{center}
+\includegraphics[scale=0.3]{images/alibaba.png}
+\end{center}
+\end{column}
+
+\begin{column}{0.45\textwidth} 
+\begin{center}
+\includegraphics[scale=0.2]{images/divres.png}
+\end{center}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}{Учим разнообразие вместе с моделью 2}
+
+\begin{center}
+Managing Diversity in Airbnb Search \cite{AIRBNB} \\
+Learning To Rank Diversely At Airbnb \cite{AIRBNB2}
+\end{center}
+
+\begin{columns}
+
+\begin{column}{0.45\textwidth}
+\begin{center}
+\includegraphics[scale=0.25]{images/airbnb2.png}
+\end{center}
+\end{column}
+
+\begin{column}{0.45\textwidth} 
+\begin{center}
+\includegraphics[scale=0.25]{images/airbnb.png}
+\end{center}
+\end{column}
+
+\end{columns}
+
+\end{frame}
+
+\begin{frame}{}
+
+\begin{tcolorbox}[colback=info!5,colframe=info!80,title=]
+Из-за поточечного предсказания релевантности, приходится дополнительно разнообразить списки рекомендаций
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=info!5,colframe=info!80,title=]
+Необходимость разнообразия обосновывается A/B экспериментом
+\end{tcolorbox}
 
 \end{frame}
 
@@ -105,7 +234,7 @@
 \begin{frame}{Смещения в рекомендациях \cite{BIAS}}
 
 \begin{center}
-\includegraphics[scale=0.25]{images/bias.png}
+\includegraphics[scale=0.2]{images/bias.png}
 \end{center}
 
 \end{frame}
@@ -156,27 +285,6 @@ E_D [R_{IPS}(\hat Y | P)] = \frac{1}{U I} \sum_u \sum_i E_D\left[ \frac{\delta_{
 \end{center}
 
 {\bf Идея.} При обучении модель ``видит'' признак-позицию айтема, а при инференсе признак зануляется. 
-
-\end{frame}
-
-\begin{frame}{Sampling-Bias-Corrected Neural Modeling for Large Corpus Item Recommendations \cite{YT2}}
-
-\begin{center}
-\includegraphics[scale=0.2]{images/inbatch.png}
-\end{center}
-
-{\bf Идея.} Скорректировать смещение от in-batch негативных с помощью logQ поправки. 
-
-\end{frame}
-
-\begin{frame}{Mixed Negative Sampling for Learning Two-tower Neural
-Networks in Recommendations \cite{YT3}}
-
-\begin{center}
-\includegraphics[scale=0.3]{images/mns.png}
-\end{center}
-
-{\bf Идея.} Уменьшаем selection bias, добавляя к in-batch негативным случайно сэмплированные айтемы.
 
 \end{frame}
 

@@ -76,5 +76,7 @@ class Experiments:
     DIVERSITY = Experiment("DIVERSITY", Split.THREE_WAY)
     DEBIAS = Experiment("DEBIAS", Split.HALF_HALF)
 
+    MINE = Experiment("MINE", Split.HALF_HALF)
+
     def __init__(self):
         self.experiments = [Experiments.DEBIAS]
